@@ -8,17 +8,69 @@
         <meta name="description" content="Search for pictures on Instagram and Flickr by hashtag!" />
 
         <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+        <link rel="icon" href="favicon.ico" />
 
         <link rel="stylesheet" href="css/bootstrap.min.css" />
         <link rel="stylesheet" href="css/main.css" />
         <script src="js/vendor/modernizr-2.8.3.min.js"></script>
     </head>
     <body>
-        <!--[if lt IE 8]>
-            <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
-        <![endif]-->
 
-        
+        <nav class="navbar navbar-inverse navbar-fixed-top">
+            <div class="container">
+                <div class="navbar-header">
+                    <a class="navbar-brand" href="index.html">Hash Pics</a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="jumbotron">
+            <div class="container">
+                <h1>Welcome to Hash Pics!</h1>
+                <!--[if lt IE 8]>
+                <div class="alert alert-warning" role="alert">
+                    <p class="browserupgrade"><span class="glyphicon glyphicon-alert"></span> You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+                </div>
+                <![endif]-->
+                <p>Search for your favorite hashtag and watch images from Instagram and Flickr load below.</p>
+                <form method="get" action="index.html">
+                    <div class="input-group col-sm-6 col-md-3">
+                        <span class="input-group-addon" id="hash-addon">#</span>
+                        <input type="text" class="form-control" placeholder="hashtag" aria-describedby="hash-addon" value="dctech" />
+                        <span class="input-group-btn">
+                            <button type="submit" class="btn btn-success">
+                                <i class="glyphicon glyphicon-search"></i> Search
+                            </button>
+                        </span>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="container">
+            
+            <h2>Instagram</h2>
+            <div id="instagram-images" class="row">
+                <div id="no-images-found" class="col-xs-6 col-md-3">
+                    <a href="#" class="thumbnail">
+                        <img src="img/no_image_found.jpg" alt="No Images Found" />
+                    </a>
+                </div>
+            </div>
+            
+            <h2>Flickr</h2>
+            <div id="flickr-images" class="row">
+                <div id="no-images-found" class="col-xs-6 col-md-3">
+                    <a href="#" class="thumbnail">
+                        <img src="img/no_image_found.jpg" alt="No Images Found" />
+                    </a>
+                </div>
+            </div>
+
+        </div>
+        <footer class="text-center">
+            <p>Elizabeth Wyatt &copy; Company 2014</p>
+        </footer>
 
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
         <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.11.2.min.js"><\/script>')</script>
