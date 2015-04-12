@@ -11,6 +11,7 @@ $(document).ready(function(){
 								.addClass(addedImageClass),
 		$noInstagramImages = $('#no-instagram-images-found'),
 		$instagramContainer = $('#instagram-images'),
+		$instagramPagination = $('#instagram-pagination'),
 		instagramClientID = 'e9561311b628484a80a738312c222079',
 		instagramURL = 'https://api.instagram.com/v1/tags/',
 		instagramURL2 = '/media/recent',
@@ -53,7 +54,7 @@ $(document).ready(function(){
 					});
 					console.log('Images returned: ' + imageData.length);
 					console.log('Images this Month: ' + instagramImages.length);
-					addImagesToPage($instagramContainer, instagramImages);
+					addImagesToPage($instagramContainer, $instagramPagination, instagramImages);
 				} else {
 					$noInstagramImages.show();
 				}
@@ -61,7 +62,7 @@ $(document).ready(function(){
 		});
 	}
 
-	function addImagesToPage($section, images){
+	function addImagesToPage($section, $section_pagination, images){
 		images.sort(sortByComments);
 		$.each(images, function(){
 			$thisImageBlock = $imageBlock.clone();
@@ -76,6 +77,20 @@ $(document).ready(function(){
 				});
 			$section.append($thisImageBlock);
 		});
+		$imagesInSection = $section.find('.' + addedImageClass);
+		$imagesInSection.slice(numberPerPage).hide();
+		$section_pagination.pagination({
+	        items: images.length,
+	        itemsOnPage: numberPerPage,
+	        onPageClick: function(pageNumber) {
+	            // someone changed page
+	            var showFrom = numberPerPage * (pageNumber - 1);
+	            var showTo = showFrom + numberPerPage;
+
+	            $imagesInSection.hide() // hide everything
+	                 .slice(showFrom, showTo).show(); // show for the new page
+	        }
+	    }).show();
 	}
 
 	function sortByComments(a, b){
