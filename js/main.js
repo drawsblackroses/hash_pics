@@ -15,9 +15,16 @@ $(document).ready(function(){
 		instagramClientID = 'e9561311b628484a80a738312c222079',
 		instagramURL = 'https://api.instagram.com/v1/tags/',
 		instagramURL2 = '/media/recent',
-		instagramImages = [];
+		instagramImages = [],
+		$noFlickrImages = $('#no-flickr-images-found'),
+		$flickrContainer = $('#flickr-images'),
+		$flickrPagination = $('#flickr-pagination'),
+		FlickrApiKey = '09b00df87e724b1d22f65aeb00f136e8',
+		flickrURL = 'https://api.flickr.com/services/rest/'
+		flickrMethod = 'flickr.photos.search',
+		flickrImages = [];
 
-	function getInstagramImages(hash, page){
+	function getInstagramImages(hash){
 		$instagramContainer.addClass('loading');
 		$.ajax({
 			url: instagramURL + hash + instagramURL2,
@@ -38,9 +45,7 @@ $(document).ready(function(){
 				if(imageData.length > 0){
 					$noInstagramImages.hide();
 					$.each(imageData, function(){
-						console.log('Last Month: ' + oneMonthAgo);
-						console.log('Time Created: ' + this['created_time']);
-						if((this['created_time']*1000) >= oneMonthAgo) { // compare instagram date in seconds to javascript date in miliseconds
+						if(this['created_time'] >= oneMonthAgo) {
 							instagramImages.push({
 								url: this['images']['low_resolution']['url'],
 								caption: this['caption']['text'],
@@ -48,15 +53,51 @@ $(document).ready(function(){
 								comments: this['comments']['count']
 							});
 						} else {
-							alert('End of month found');
 							return false;
 						}
 					});
-					console.log('Images returned: ' + imageData.length);
-					console.log('Images this Month: ' + instagramImages.length);
 					addImagesToPage($instagramContainer, $instagramPagination, instagramImages);
 				} else {
 					$noInstagramImages.show();
+				}
+			}
+		});
+	}
+
+	function getFlickrImages(hash){
+		$flickrContainer.addClass('loading');
+		$.ajax({
+			url: flickrURL,
+			method: 'get',
+			dataType: 'xml',
+			data: {
+				method: flickrMethod,
+				api_key: FlickrApiKey,
+				tags: hash,
+				min_upload_date: oneMonthAgo,
+				media: 'photos'
+			},
+			success: function(data){
+				flickrImages = [];
+				var responseData = $(data).find('photos');
+				var imageData = responseData.find('photo');
+				$flickrContainer.removeClass('loading');
+				$flickrContainer.find('.'+addedImageClass).remove();
+				if(responseData.attr('total') != 0 && imageData.length > 0){
+					alert('images found');
+					/*$noFlickrImages.hide();
+					$.each(imageData, function(){
+						flickrImages.push({
+							url: this['images']['low_resolution']['url'],
+							caption: this['caption']['text'],
+							link: this['link'],
+							comments: this['comments']['count']
+						});
+					});
+					addImagesToPage($flickrContainer, $flickrPagination, flickrImages);*/
+				} else {
+					alert('no images found!');
+					$noFlickrImages.show();
 				}
 			}
 		});
@@ -106,10 +147,11 @@ $(document).ready(function(){
 	function getDateForLastMonth(){
 		var x = new Date();
 		x.setMonth(x.getMonth() - 1);
-		return x.valueOf();
+		return parseInt((x.valueOf()) / 1000);
 	}
 
-	getInstagramImages(defaultHash, 1);
+	getInstagramImages(defaultHash);
+	getFlickrImages(defaultHash);
 
 });
 
