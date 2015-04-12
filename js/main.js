@@ -7,6 +7,7 @@ $(document).ready(function(){
 		oneMonthAgo = getDateForLastMonth(),
 		$imageBlock = $('.no-images-found').first()
 								.clone().attr('id','')
+								.attr('target','_blank')
 								.removeClass('no-images-found')
 								.addClass(addedImageClass),
 		$noInstagramImages = $('#no-instagram-images-found'),
@@ -25,11 +26,13 @@ $(document).ready(function(){
 		flickrImages = [];
 
 	function getAllImages(hash){
-		getInstagramImages(hash);
+		instagramImages = [];
+		flickrImages = [];
+		getInstagramImages(hash, null);
 		getFlickrImages(hash);
 	}
 
-	function getInstagramImages(hash){
+	function getInstagramImages(hash, max_tag_id){
 		$instagramContainer.addClass('loading');
 		$.ajax({
 			url: instagramURL + hash + instagramURL2,
@@ -38,14 +41,12 @@ $(document).ready(function(){
 			crossDomain: true, // added to fix cors issue
 			data: {
 				client_id: instagramClientID,
-				count: 100, //numberPerPage,
-				//min_tag_id: first_id, <- should be used for "previous" button
-				//max_tag_id: last_id  <- should be used for "next" button
+				count: 20, //numberPerPage,
+				max_tag_id: max_tag_id
 			},
 			success: function(data){
-				instagramImages = [];
+				var thisMonth = true;
 				var imageData = data.data;
-				$instagramContainer.removeClass('loading');
 				$instagramContainer.find('.'+addedImageClass).remove();
 				if(imageData.length > 0){
 					$noInstagramImages.hide();
@@ -58,11 +59,17 @@ $(document).ready(function(){
 								comments: this['comments']['count']
 							});
 						} else {
+							thisMonth = false;
 							return false;
 						}
 					});
-					console.log('Instagram Images Found for #' + hash + ': ' + instagramImages.length);
-					addImagesToPage($instagramContainer, $instagramPagination, instagramImages);
+					if(thisMonth){
+						getInstagramImages(hash, data.pagination.next_max_tag_id);
+					} else {
+						$instagramContainer.removeClass('loading');
+						console.log('Instagram Images Found for #' + hash + ': ' + instagramImages.length);
+						addImagesToPage($instagramContainer, $instagramPagination, instagramImages);
+					}
 				} else {
 					$noInstagramImages.show();
 				}
@@ -84,7 +91,6 @@ $(document).ready(function(){
 				media: 'photos'
 			},
 			success: function(data){
-				flickrImages = [];
 				var responseData = $(data).find('photos');
 				var imageData = responseData.find('photo');
 				$flickrContainer.find('.'+addedImageClass).remove();
@@ -156,8 +162,7 @@ $(document).ready(function(){
 		return parseInt((x.valueOf()) / 1000);
 	}
 
-	getInstagramImages(defaultHash);
-	getFlickrImages(defaultHash);
+	getAllImages(defaultHash);
 
 	$('#hash-search-form').submit(function(){
 		var hashtag = $(this).find('input[name="hashtag"]').val();
