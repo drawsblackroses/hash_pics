@@ -33,15 +33,20 @@
                 </div>
                 <![endif]-->
                 <p>Search for your favorite hashtag and watch images from Instagram and Flickr load below.</p>
-                <form method="get" action="index.html">
-                    <div class="input-group col-sm-6 col-md-3">
-                        <span class="input-group-addon" id="hash-addon">#</span>
-                        <input type="text" class="form-control" placeholder="hashtag" aria-describedby="hash-addon" value="dctech" />
-                        <span class="input-group-btn">
-                            <button type="submit" class="btn btn-success">
-                                <i class="glyphicon glyphicon-search"></i> Search
-                            </button>
-                        </span>
+                <form id="hash-search-form" method="get" action="index.html">
+                    <div class="col-sm-6 col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-addon" id="hash-addon">#</span>
+                            <input type="text" name="hashtag" class="form-control" placeholder="hashtag" aria-describedby="hash-addon" value="dctech" />
+                            <span class="input-group-btn">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="glyphicon glyphicon-search"></i> Search
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-8">
+                        <span class="help-block">Returns up to 100 results for the last month sorted by number of comments.</span>
                     </div>
                 </form>
             </div>

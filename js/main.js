@@ -24,6 +24,11 @@ $(document).ready(function(){
 		flickrMethod = 'flickr.photos.search',
 		flickrImages = [];
 
+	function getAllImages(hash){
+		getInstagramImages(hash);
+		getFlickrImages(hash);
+	}
+
 	function getInstagramImages(hash){
 		$instagramContainer.addClass('loading');
 		$.ajax({
@@ -56,6 +61,7 @@ $(document).ready(function(){
 							return false;
 						}
 					});
+					console.log('Instagram Images Found for #' + hash + ': ' + instagramImages.length);
 					addImagesToPage($instagramContainer, $instagramPagination, instagramImages);
 				} else {
 					$noInstagramImages.show();
@@ -81,12 +87,12 @@ $(document).ready(function(){
 				flickrImages = [];
 				var responseData = $(data).find('photos');
 				var imageData = responseData.find('photo');
-				$flickrContainer.removeClass('loading');
 				$flickrContainer.find('.'+addedImageClass).remove();
 				if(responseData.attr('total') != 0 && imageData.length > 0){
-					alert('images found');
-					/*$noFlickrImages.hide();
-					$.each(imageData, function(){
+					console.log('Flickr Images Found for #' + hash + ': ' + responseData.attr('total'))
+					$flickrContainer.removeClass('loading');
+					$noFlickrImages.hide();
+					/*$.each(imageData, function(){
 						flickrImages.push({
 							url: this['images']['low_resolution']['url'],
 							caption: this['caption']['text'],
@@ -96,7 +102,7 @@ $(document).ready(function(){
 					});
 					addImagesToPage($flickrContainer, $flickrPagination, flickrImages);*/
 				} else {
-					alert('no images found!');
+					$flickrContainer.removeClass('loading');
 					$noFlickrImages.show();
 				}
 			}
@@ -152,6 +158,12 @@ $(document).ready(function(){
 
 	getInstagramImages(defaultHash);
 	getFlickrImages(defaultHash);
+
+	$('#hash-search-form').submit(function(){
+		var hashtag = $(this).find('input[name="hashtag"]').val();
+		getAllImages(hashtag);
+		return false;
+	});
 
 });
 
