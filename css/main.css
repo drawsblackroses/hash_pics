@@ -2,6 +2,22 @@ body {
     padding-top: 51px;
 }
 
+.loading {
+    position: relative;
+}
+
+.loading:before {
+    content: url(../img/loading.gif);
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    text-align: center;
+    background: #fff;
+    opacity: 75%;
+}
+
 footer {
     margin: 25px 0 0;
     padding: 35px 0 25px;
