@@ -4,6 +4,7 @@ $(document).ready(function(){
 	var defaultHash = 'dctech',
 		numberPerPage = 4,
 		addedImageClass = 'image-found',
+		oneMonthAgo = getDateForLastMonth(),
 		$imageBlock = $('.no-images-found').first()
 								.clone().attr('id','')
 								.removeClass('no-images-found')
@@ -24,7 +25,7 @@ $(document).ready(function(){
 			crossDomain: true, // added to fix cors issue
 			data: {
 				client_id: instagramClientID,
-				count: numberPerPage,
+				count: 100, //numberPerPage,
 				//min_tag_id: first_id, <- should be used for "previous" button
 				//max_tag_id: last_id  <- should be used for "next" button
 			},
@@ -36,11 +37,22 @@ $(document).ready(function(){
 				if(imageData.length > 0){
 					$noInstagramImages.hide();
 					$.each(imageData, function(){
-						instagramImages.push({
-							url: this['images']['low_resolution']['url'],
-							caption: this['caption']['text']
-						});
+						console.log('Last Month: ' + oneMonthAgo);
+						console.log('Time Created: ' + this['created_time']);
+						if((this['created_time']*1000) >= oneMonthAgo) { // compare instagram date in seconds to javascript date in miliseconds
+							instagramImages.push({
+								url: this['images']['low_resolution']['url'],
+								caption: this['caption']['text'],
+								link: this['link'],
+								comments: this['comments']['count']
+							});
+						} else {
+							alert('End of month found');
+							return false;
+						}
 					});
+					console.log('Images returned: ' + imageData.length);
+					console.log('Images this Month: ' + instagramImages.length);
 					addImagesToPage($instagramContainer, instagramImages);
 				} else {
 					$noInstagramImages.show();
@@ -50,13 +62,36 @@ $(document).ready(function(){
 	}
 
 	function addImagesToPage($section, images){
+		images.sort(sortByComments);
 		$.each(images, function(){
 			$thisImageBlock = $imageBlock.clone();
-			$thisImageBlock.find('img')
-				.attr('src',this.url)
-				.attr('alt',this.caption);
+			$thisImageBlock
+				.find('a.thumbnail')
+				.attr('href',this.link)
+				.find('img')
+				.attr({
+					'src': this.url,
+					'alt': this.caption,
+					'data-comments': this.comments
+				});
 			$section.append($thisImageBlock);
 		});
+	}
+
+	function sortByComments(a, b){
+	  	if (a.comments < b.comments) {
+	     	return 1;
+	  	} else if (a.comments > b.comments) {
+	    	return -1;
+	  	} else {
+	  		return 0;
+	  	}
+	}
+
+	function getDateForLastMonth(){
+		var x = new Date();
+		x.setMonth(x.getMonth() - 1);
+		return x.valueOf();
 	}
 
 	getInstagramImages(defaultHash, 1);
