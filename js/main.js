@@ -3,6 +3,7 @@ $(document).ready(function(){
 
 	var defaultHash = 'dctech',
 		numberPerPage = 4,
+		searchCap = 200,
 		addedImageClass = 'image-found',
 		oneMonthAgo = getDateForLastMonth(),
 		$imageBlock = $('.no-images-found').first()
@@ -51,7 +52,7 @@ $(document).ready(function(){
 				if(imageData.length > 0){
 					$noInstagramImages.hide();
 					$.each(imageData, function(){
-						if(this['created_time'] >= oneMonthAgo) {
+						if(this['created_time'] >= oneMonthAgo && instagramImages.length < searchCap) {
 							instagramImages.push({
 								url: this['images']['low_resolution']['url'],
 								caption: (this['caption'])? this['caption']['text']:'',
@@ -71,6 +72,8 @@ $(document).ready(function(){
 						addImagesToPage($instagramContainer, $instagramPagination, instagramImages);
 					}
 				} else {
+					$instagramContainer.removeClass('loading');
+					$instagramPagination.hide();
 					$noInstagramImages.show();
 				}
 			}
@@ -88,24 +91,47 @@ $(document).ready(function(){
 				api_key: FlickrApiKey,
 				tags: hash,
 				min_upload_date: oneMonthAgo,
-				media: 'photos'
+				media: 'photos',
+				per_page: searchCap,
+				extras: 'url_n, count_comments'
 			},
 			success: function(data){
+				console.log(data);
 				var responseData = $(data).find('photos');
 				var imageData = responseData.find('photo');
 				$flickrContainer.find('.'+addedImageClass).remove();
 				if(responseData.attr('total') != 0 && imageData.length > 0){
 					console.log('Flickr Images Found for #' + hash + ': ' + responseData.attr('total'));
-					getFlickrComments(imageData);
+					$.each(imageData, function(){
+						var farmID = $(this).attr('farm'),
+							serverID = $(this).attr('server'),
+							imageID = $(this).attr('id'),
+							secretID = $(this).attr('secret'),
+							userID = $(this).attr('owner'),
+							imageTitle = $(this).attr('title'),
+							numberOfComments = $(this).attr('count_comments'),
+							imageURL = $(this).attr('url_n');
+
+						flickrImages.push({
+							url: imageURL, //getFlickrImage(farmID, serverID, imageID, secretID),
+							caption: imageTitle,
+							link: getFlickrLink(userID, imageID),
+							comments: numberOfComments
+						});
+					});
+					$noFlickrImages.hide();
+					$flickrContainer.removeClass('loading');
+					addImagesToPage($flickrContainer, $flickrPagination, flickrImages);
 				} else {
 					$flickrContainer.removeClass('loading');
+					$flickrPagination.hide()
 					$noFlickrImages.show();
 				}
 			}
 		});
 	}
 
-	function getFlickrComments(imagesArray){
+	/*function getFlickrComments(imagesArray){
 		var thisImage = imagesArray.first(),
 			farmID = thisImage.attr('farm'),
 			serverID = thisImage.attr('server'),
@@ -113,8 +139,8 @@ $(document).ready(function(){
 			secretID = thisImage.attr('secret'),
 			userID = thisImage.attr('owner'),
 			imageTitle = thisImage.attr('title');
-
-		imagesArray.slice(0);
+		
+		imagesArray.slice(1); // attempting to remove element from jquery object
 
 		$.ajax({
 			url: flickrURL,
@@ -136,7 +162,7 @@ $(document).ready(function(){
 					comments: numberOfComments
 				});
 				if(imagesArray.length > 0){
-					getFlickrComments(imagesArray)
+					//getFlickrComments(imagesArray)
 				} else {
 					$noFlickrImages.hide();
 					$flickrContainer.removeClass('loading');
@@ -150,7 +176,7 @@ $(document).ready(function(){
 		return 'https://farm' + farmID + 
 			'.staticflickr.com/' + serverID +
 			'/' + imageID + '_' + secretID + '.jpg';
-	}
+	}*/
 
 	function getFlickrLink(userID, imageID){
 		return 'https://www.flickr.com/photos/' +
