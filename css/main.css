@@ -4,18 +4,32 @@ body {
 
 .loading {
     position: relative;
+    min-height: 300px;
 }
 
-.loading:before {
-    content: url(../img/loading.gif);
+.loading:before,
+.loading:after {
     width: 100%;
     height: 100%;
     position: absolute;
-    top: 0;
     left: 0;
     text-align: center;
+    display: block;
+    opacity: 0.75;
+}
+
+.loading:before {
+    content: '\00a0';
     background: #fff;
-    opacity: 75%;
+    z-index: 100;
+    top: 0;
+}
+
+.loading:after {
+    content: url(../img/loading.gif);
+    z-index: 200;
+    top: 50%;
+    margin-top: -30px;
 }
 
 footer {
