@@ -10,50 +10,89 @@ $(document).ready(function(){
 								.clone().attr('id','')
 								.removeClass('no-images-found')
 								.addClass(addedImageClass),
-		$noInstagramImages = $('#no-instagram-images-found'),
-		$instagramContainer = $('#instagram-images'),
-		$instagramPagination = $('#instagram-pagination'),
-		instagramClientID = 'e9561311b628484a80a738312c222079',
-		instagramURL = 'https://api.instagram.com/v1/tags/',
-		instagramURL2 = '/media/recent',
-		instagramImages = [],
-		$noFlickrImages = $('#no-flickr-images-found'),
-		$flickrContainer = $('#flickr-images'),
-		$flickrPagination = $('#flickr-pagination'),
-		FlickrApiKey = '09b00df87e724b1d22f65aeb00f136e8',
-		flickrURL = 'https://api.flickr.com/services/rest/',
-		flickrImagesMethod = 'flickr.photos.search',
-		flickrCommentsMethod = 'flickr.photos.comments.getList',
-		flickrImages = [];
+		instagramSection,
+		flickrSection;
+
+	function ImageSection(init) {
+		this.nickname = init.nickname;
+		this.container = init.container;
+		this.pagination = init.pagination;
+		this.noImages = init.noImages;
+		this.foundImages = [];
+		this.apiVariables = (init.apiVariables)? init.apiVariables : {};
+		this.paginationFunction = function(){
+			$imagesInSection = this.container.find('.' + addedImageClass);
+			$imagesInSection.slice(numberPerPage).hide();
+			this.pagination.pagination({
+		        items: this.foundImages.length,
+		        itemsOnPage: numberPerPage,
+		        imageSection: this.container,
+		        hrefTextSuffix: '-' + this.nickname,
+		        onPageClick: function(pageNumber) {
+		            // someone changed page
+		            var showFrom = numberPerPage * (pageNumber - 1);
+		            var showTo = showFrom + numberPerPage;
+
+		            this.imageSection.find('.' + addedImageClass).hide() // hide everything
+		                 .slice(showFrom, showTo).show(); // show for the new page
+		        }
+		    }).show();
+		};
+	}
+
+	instagramSection = new ImageSection({
+						nickname: 'instagram',
+						container: $('#instagram-images'), 
+						pagination: $('#instagram-pagination'), 
+						noImages: $('#no-instagram-images-found'),
+						apiVariables: {
+							clientID: 'e9561311b628484a80a738312c222079',
+							url: 'https://api.instagram.com/v1/tags/',
+							url2: '/media/recent',
+						}
+					});
+
+	flickrSection = new ImageSection({
+						nickname: 'flickr',
+						container: $('#flickr-images'), 
+						pagination: $('#flickr-pagination'), 
+						noImages: $('#no-flickr-images-found'),
+						apiVariables: {
+							apiKey: '09b00df87e724b1d22f65aeb00f136e8',
+							url: 'https://api.flickr.com/services/rest/',
+							imageMethod: 'flickr.photos.search'
+						}
+					});
 
 	function getAllImages(hash){
-		instagramImages = [];
-		flickrImages = [];
+		instagramSection.foundImages = [];
+		flickrSection.foundImages = [];
 		getInstagramImages(hash, null);
 		getFlickrImages(hash);
 	}
 
 	function getInstagramImages(hash, max_tag_id){
-		$instagramContainer.addClass('loading');
+		instagramSection.container.addClass('loading');
+		apiVars = instagramSection.apiVariables;
 		$.ajax({
-			url: instagramURL + hash + instagramURL2,
+			url: apiVars.url + hash + apiVars.url2,
 			method: 'get',
 			dataType: 'jsonp', // added to fix cors issue
 			crossDomain: true, // added to fix cors issue
 			data: {
-				client_id: instagramClientID,
+				client_id: apiVars.clientID,
 				count: 20, //numberPerPage,
 				max_tag_id: max_tag_id
 			},
 			success: function(data){
 				var thisMonth = true;
 				var imageData = data.data;
-				$instagramContainer.find('.'+addedImageClass).remove();
+				instagramSection.container.find('.'+addedImageClass).remove();
 				if(imageData.length > 0){
-					$noInstagramImages.hide();
+					instagramSection.noImages.hide();
 					$.each(imageData, function(){
-						if(this['created_time'] >= oneMonthAgo && instagramImages.length < searchCap) {
-							instagramImages.push({
+						if(this['created_time'] >= oneMonthAgo && instagramSection.foundImages.length < searchCap) {
+							instagramSection.foundImages.push({
 								url: this['images']['low_resolution']['url'],
 								caption: (this['caption'])? this['caption']['text']:'',
 								link: this['link'],
@@ -67,28 +106,29 @@ $(document).ready(function(){
 					if(thisMonth){
 						getInstagramImages(hash, data.pagination.next_max_tag_id);
 					} else {
-						$instagramContainer.removeClass('loading');
-						console.log('Instagram Images Found for #' + hash + ': ' + instagramImages.length);
-						addImagesToPage($instagramContainer, $instagramPagination, instagramImages);
+						instagramSection.container.removeClass('loading');
+						console.log('Instagram Images Found for #' + hash + ': ' + instagramSection.foundImages.length);
+						addImagesToPage(instagramSection);
 					}
 				} else {
-					$instagramContainer.removeClass('loading');
-					$instagramPagination.hide();
-					$noInstagramImages.show();
+					instagramSection.container.removeClass('loading');
+					instagramSection.pagination.hide();
+					instagramSection.noImages.show();
 				}
 			}
 		});
 	}
 
 	function getFlickrImages(hash){
-		$flickrContainer.addClass('loading');
+		flickrSection.container.addClass('loading');
+		apiVars = flickrSection.apiVariables;
 		$.ajax({
-			url: flickrURL,
+			url: apiVars.url,
 			method: 'get',
 			dataType: 'xml',
 			data: {
-				method: flickrImagesMethod,
-				api_key: FlickrApiKey,
+				method: apiVars.imageMethod,
+				api_key: apiVars.apiKey,
 				tags: hash,
 				min_upload_date: oneMonthAgo,
 				media: 'photos',
@@ -99,7 +139,7 @@ $(document).ready(function(){
 				console.log(data);
 				var responseData = $(data).find('photos');
 				var imageData = responseData.find('photo');
-				$flickrContainer.find('.'+addedImageClass).remove();
+				flickrSection.container.find('.'+addedImageClass).remove();
 				if(responseData.attr('total') != 0 && imageData.length > 0){
 					console.log('Flickr Images Found for #' + hash + ': ' + responseData.attr('total'));
 					$.each(imageData, function(){
@@ -112,80 +152,33 @@ $(document).ready(function(){
 							numberOfComments = $(this).attr('count_comments'),
 							imageURL = $(this).attr('url_n');
 
-						flickrImages.push({
+						flickrSection.foundImages.push({
 							url: imageURL, //getFlickrImage(farmID, serverID, imageID, secretID),
 							caption: imageTitle,
 							link: getFlickrLink(userID, imageID),
 							comments: numberOfComments
 						});
 					});
-					$noFlickrImages.hide();
-					$flickrContainer.removeClass('loading');
-					addImagesToPage($flickrContainer, $flickrPagination, flickrImages);
+					flickrSection.noImages.hide();
+					flickrSection.container.removeClass('loading');
+					addImagesToPage(flickrSection);
 				} else {
-					$flickrContainer.removeClass('loading');
-					$flickrPagination.hide()
-					$noFlickrImages.show();
+					flickrSection.container.removeClass('loading');
+					flickrSection.pagination.hide()
+					flickrSection.noImages.show();
 				}
 			}
 		});
 	}
-
-	/*function getFlickrComments(imagesArray){
-		var thisImage = imagesArray.first(),
-			farmID = thisImage.attr('farm'),
-			serverID = thisImage.attr('server'),
-			imageID = thisImage.attr('id'),
-			secretID = thisImage.attr('secret'),
-			userID = thisImage.attr('owner'),
-			imageTitle = thisImage.attr('title');
-		
-		imagesArray.slice(1); // attempting to remove element from jquery object
-
-		$.ajax({
-			url: flickrURL,
-			method: 'get',
-			dataType: 'xml',
-			data: {
-				method: flickrCommentsMethod,
-				api_key: FlickrApiKey,
-				photo_id: imageID
-			},
-			success: function(data){
-				var responseData = $(data).find('comments');
-				var numberOfComments = responseData.find('comment').length;
-
-				flickrImages.push({
-					url: getFlickrImage(farmID, serverID, imageID, secretID),
-					caption: imageTitle,
-					link: getFlickrLink(userID, imageID),
-					comments: numberOfComments
-				});
-				if(imagesArray.length > 0){
-					//getFlickrComments(imagesArray)
-				} else {
-					$noFlickrImages.hide();
-					$flickrContainer.removeClass('loading');
-					addImagesToPage($flickrContainer, $flickrPagination, flickrImages);
-				}
-			}
-		});
-	}
-
-	function getFlickrImage(farmID, serverID, imageID, secretID){
-		return 'https://farm' + farmID + 
-			'.staticflickr.com/' + serverID +
-			'/' + imageID + '_' + secretID + '.jpg';
-	}*/
 
 	function getFlickrLink(userID, imageID){
 		return 'https://www.flickr.com/photos/' +
 			userID + '/' + imageID;
 	}
 
-	function addImagesToPage($section, $section_pagination, images){
-		images.sort(sortByComments);
-		$.each(images, function(){
+	function addImagesToPage(sectionObject){
+		sectionObject.foundImages.sort(sortByComments);
+		$.each(sectionObject.foundImages, function(){
 			$thisImageBlock = $imageBlock.clone();
 			$thisImageBlock
 				.find('a.thumbnail')
@@ -196,9 +189,11 @@ $(document).ready(function(){
 					'alt': this.caption,
 					'data-comments': this.comments
 				});
-			$section.append($thisImageBlock);
+			sectionObject.container.append($thisImageBlock);
 		});
-		$imagesInSection = $section.find('.' + addedImageClass);
+		// initialize pagination
+		sectionObject.paginationFunction();
+		/*$imagesInSection = $sectionContainer.find('.' + addedImageClass);
 		$imagesInSection.slice(numberPerPage).hide();
 		$section_pagination.pagination({
 	        items: images.length,
@@ -211,7 +206,7 @@ $(document).ready(function(){
 	            $imagesInSection.hide() // hide everything
 	                 .slice(showFrom, showTo).show(); // show for the new page
 	        }
-	    }).show();
+	    }).show();*/
 	}
 
 	function sortByComments(a, b){
